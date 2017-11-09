@@ -11,4 +11,8 @@ contract MultiownableImpl is Multiownable {
         value = _value;
     }
 
+    function setValueAny(uint _value) public onlyAnyOwner {
+        value = _value;
+    }
+
 }
