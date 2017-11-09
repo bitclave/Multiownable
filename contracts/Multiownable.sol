@@ -3,28 +3,41 @@ pragma solidity ^0.4.11;
 
 contract Multiownable {
 
+    // Store owners and reverse lookup hash-table
     address[] public owners;
     mapping(address => uint) public ownersIndexes; // Counts from 1
     
+    // Store owners voting by pending operations and all operations array
     mapping(bytes32 => uint256) public pending;
     bytes32[] public allPendingOperations;
     
+    // EVENTS
+
     event OwnershipTransferred(address[] previousOwner, address[] newOwner);
+
+    // ACCESSORS
 
     function allPendingOperationsCount() public returns(uint) {
         return allPendingOperations.length;
     }
 
-    function Multiownable() public {
-        owners.push(msg.sender);
-        ownersIndexes[msg.sender] = 1;
+    function isOwner(address wallet) public constant returns(bool) {
+        return ownersIndexes[wallet] > 0;
     }
 
+    // MODIFIERS
+
+    /**
+    * @dev Allows to perform method by any of owners
+    */
     modifier onlyAnyOwner {
         require(isOwner(msg.sender));
         _;
     }
 
+    /**
+    * @dev Allows to perform method only after all owners call it with the same arguments
+    */
     modifier onlyManyOwners {
         require(isOwner(msg.sender));
 
@@ -43,10 +56,19 @@ contract Multiownable {
         }
     }
 
-    function isOwner(address wallet) public constant returns(bool) {
-        return ownersIndexes[wallet] > 0;
+    // CONSTRUCTOR
+
+    function Multiownable() public {
+        owners.push(msg.sender);
+        ownersIndexes[msg.sender] = 1;
     }
 
+    // INTERNAL METHODS
+
+    /**
+    * @dev Used to delete cancelled or performed operation
+    * @param operation defines which operation to delete
+    */
     function deleteOperation(bytes32 operation) internal {
         delete pending[operation];
         for (uint i = 0; i < allPendingOperations.length; i++) {
@@ -58,6 +80,12 @@ contract Multiownable {
         }
     }
 
+    // PUBLIC METHODS
+
+    /**
+    * @dev Allows owners to change their mind by cacnelling pending operations
+    * @param operation defines which operation to delete
+    */
     function cancelPending(bytes32 operation) public onlyAnyOwner {
         uint ownerIndex = ownersIndexes[msg.sender] - 1;
         require((pending[operation] & (2 ** ownerIndex)) != 0);
@@ -68,6 +96,10 @@ contract Multiownable {
         }
     }
 
+    /**
+    * @dev Allows owners to change ownership
+    * @param newOwners defines array of addresses of new owners
+    */
     function transferOwnership(address[] newOwners) public onlyManyOwners {
         require(newOwners.length > 0);
         for (uint i = 0; i < newOwners.length; i++) {
