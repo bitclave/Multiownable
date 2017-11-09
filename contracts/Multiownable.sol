@@ -3,9 +3,11 @@ pragma solidity ^0.4.11;
 
 contract Multiownable {
 
+    // VARIABLES
+
     // Store owners and reverse lookup hash-table
     address[] public owners;
-    mapping(address => uint) public ownersIndexes; // Counts from 1
+    mapping(address => uint) public ownersIndices; // Starts from 1
     
     // Store owners voting by pending operations and all operations array
     mapping(bytes32 => uint256) public pending;
@@ -13,7 +15,7 @@ contract Multiownable {
     
     // EVENTS
 
-    event OwnershipTransferred(address[] previousOwner, address[] newOwner);
+    event OwnershipTransferred(address[] previousOwners, address[] newOwners);
 
     // ACCESSORS
 
@@ -22,13 +24,13 @@ contract Multiownable {
     }
 
     function isOwner(address wallet) public constant returns(bool) {
-        return ownersIndexes[wallet] > 0;
+        return ownersIndices[wallet] > 0;
     }
 
     // MODIFIERS
 
     /**
-    * @dev Allows to perform method by any of owners
+    * @dev Allows to perform method by any of the owners
     */
     modifier onlyAnyOwner {
         require(isOwner(msg.sender));
@@ -41,7 +43,7 @@ contract Multiownable {
     modifier onlyManyOwners {
         require(isOwner(msg.sender));
 
-        uint ownerIndex = ownersIndexes[msg.sender] - 1;
+        uint ownerIndex = ownersIndices[msg.sender] - 1;
         bytes32 operation = sha3(msg.data);
         if (pending[operation] == 0) {
             allPendingOperations.push(operation);
@@ -60,7 +62,7 @@ contract Multiownable {
 
     function Multiownable() public {
         owners.push(msg.sender);
-        ownersIndexes[msg.sender] = 1;
+        ownersIndices[msg.sender] = 1;
     }
 
     // INTERNAL METHODS
@@ -87,7 +89,7 @@ contract Multiownable {
     * @param operation defines which operation to delete
     */
     function cancelPending(bytes32 operation) public onlyAnyOwner {
-        uint ownerIndex = ownersIndexes[msg.sender] - 1;
+        uint ownerIndex = ownersIndices[msg.sender] - 1;
         require((pending[operation] & (2 ** ownerIndex)) != 0);
         
         pending[operation] &= ~(2 ** ownerIndex);
@@ -110,10 +112,10 @@ contract Multiownable {
 
         // Reset owners array and index reverse lookup table
         for (i = 0; i < owners.length; i++) {
-            delete ownersIndexes[owners[i]];
+            delete ownersIndices[owners[i]];
         }
         for (i = 0; i < newOwners.length; i++) {
-            ownersIndexes[newOwners[i]] = i + 1;
+            ownersIndices[newOwners[i]] = i + 1;
         }
         owners = newOwners;
 
