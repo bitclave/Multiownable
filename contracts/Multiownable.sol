@@ -53,8 +53,8 @@ contract Multiownable {
 
         // If all owners confirm same operation
         if (pending[operation] == (2 ** owners.length) - 1) {
-            _;
             deleteOperation(operation);
+            _;
         }
     }
 
