@@ -1,0 +1,59 @@
+{
+    // Truffle tasks for Visual Studio Code
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "command": "truffle",
+    //"isShellCommand": true,
+    "args": [],
+    //"showOutput": "always",
+    "echoCommand": true,
+    "env": {
+        "NODE_ENV": "development"
+    },
+    "tasks": [
+        {
+            "taskName": "compile",
+            "problemMatcher": []
+        },
+        {
+            "taskName": "migrate",
+            "problemMatcher": []
+        },
+        {
+            "taskName": "test all",
+            "problemMatcher": [],
+            "type": "shell",
+            "command": "truffle",
+            "args": [
+                "test"
+            ]
+        },
+        {
+            "taskName": "test one",
+            "type": "shell",
+            "command": "truffle test test/ZepCATCrowdsale.js",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": []
+        },
+        {
+            "taskName": "gen docs",
+            "type": "shell",
+            "command": "./gendoc.sh",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": []
+        },
+        {
+            "taskName": "build"
+        },
+        {
+            "taskName": "console"
+        }
+    ]
+}
