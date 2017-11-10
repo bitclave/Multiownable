@@ -16,6 +16,7 @@ import EVMThrow from './helpers/EVMThrow';
 
 const Multiownable = artifacts.require('Multiownable.sol');
 const MultiownableImpl = artifacts.require('./impl/MultiownableImpl.sol');
+const MultisigMintableToken = artifacts.require('./impl/MultisigMintableToken.sol');
 
 contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, wallet5]) {
 
@@ -413,6 +414,30 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
             _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
             _,
         ]).should.be.rejectedWith(EVMThrow);
+    })
+
+    it('should override onlyOwner_overrideForAnyOwner', async function() {
+        const token = await MultisigMintableToken.new();
+        await token.transferOwnership([wallet1, wallet2]);
+
+        await token.mint(_, 100).should.be.rejectedWith(EVMThrow);
+        
+        (await token.totalSupply.call()).should.be.bignumber.equal(0);
+        await token.mint(_, 100, {from: wallet1});
+        (await token.totalSupply.call()).should.be.bignumber.equal(0);
+        await token.mint(_, 100, {from: wallet2});
+        (await token.totalSupply.call()).should.be.bignumber.equal(100);
+    })
+
+    it('should override onlyOwner_overrideForManyOwners', async function() {
+        const token = await MultisigMintableToken.new();
+        await token.transferOwnership([wallet1, wallet2]);
+
+        await token.finishMinting().should.be.rejectedWith(EVMThrow);
+
+        (await token.mintingFinished.call()).should.be.false;
+        await token.finishMinting({from: wallet2});
+        (await token.mintingFinished.call()).should.be.true;
     })
 
 })

@@ -52,8 +52,27 @@ contract Multiownable {
     modifier onlyManyOwners {
         if (insideOnlyManyOwners == msg.sender) {
             _;
-            return;
+        } else if (checkOnlyManyOwners()) {
+            insideOnlyManyOwners = msg.sender;
+            _;
+            insideOnlyManyOwners = address(0);
         }
+    }
+
+    // CONSTRUCTOR
+
+    function Multiownable() public {
+        owners.push(msg.sender);
+        ownersIndices[msg.sender] = 1;
+        howManyOwnersDecide = 1;
+    }
+
+    // INTERNAL METHODS
+
+    /**
+    * @dev onlyManyOwners modifier helper
+    */
+    function checkOnlyManyOwners() internal constant returns(bool) {
         require(isOwner(msg.sender));
 
         uint ownerIndex = ownersIndices[msg.sender] - 1;
@@ -70,18 +89,9 @@ contract Multiownable {
         // If all owners confirm same operation
         if (votesCountByOperation[operation] == howManyOwnersDecide) {
             deleteOperation(operation);
-            insideOnlyManyOwners = msg.sender;
-            _;
-            insideOnlyManyOwners = address(0);
+            return true;
         }
-    }
-
-    // CONSTRUCTOR
-
-    function Multiownable() public {
-        owners.push(msg.sender);
-        ownersIndices[msg.sender] = 1;
-        howManyOwnersDecide = 1;
+        return false;
     }
 
     // INTERNAL METHODS
