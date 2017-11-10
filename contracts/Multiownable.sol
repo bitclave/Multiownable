@@ -19,7 +19,7 @@ contract Multiownable {
 
     // ACCESSORS
 
-    function allPendingOperationsCount() public returns(uint) {
+    function allPendingOperationsCount() public constant returns(uint) {
         return allPendingOperations.length;
     }
 
@@ -44,7 +44,7 @@ contract Multiownable {
         require(isOwner(msg.sender));
 
         uint ownerIndex = ownersIndices[msg.sender] - 1;
-        bytes32 operation = sha3(msg.data);
+        bytes32 operation = keccak256(msg.data);
         if (pending[operation] == 0) {
             allPendingOperations.push(operation);
         }
