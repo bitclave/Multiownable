@@ -281,7 +281,7 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
         (await obj.value.call()).should.be.bignumber.equal(1);
     })
 
-    it('should allow call onlyAnyOwner methods properly', async function() {
+    it('should allow to call onlyAnyOwner methods properly', async function() {
         const obj = await MultiownableImpl.new();
         await obj.transferOwnership([wallet1, wallet2]);
         
@@ -296,7 +296,7 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
         (await obj.value.call()).should.be.bignumber.equal(3);
     })
 
-    it('should allow call onlyAnyOwner methods properly', async function() {
+    it('should allow to call onlyManyOwners methods properly', async function() {
         const obj = await MultiownableImpl.new();
         await obj.transferOwnership([wallet1, wallet2]);
         
