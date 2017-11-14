@@ -332,4 +332,33 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
         await obj.transferOwnership([wallet1, wallet2, 0]).should.be.rejectedWith(EVMThrow);
     })
 
+    it('should not allow to transfer ownership to several equal users', async function() {
+        const obj = await Multiownable.new();
+        await obj.transferOwnership([wallet1, wallet1]).should.be.rejectedWith(EVMThrow);
+        await obj.transferOwnership([wallet1, wallet2, wallet1]).should.be.rejectedWith(EVMThrow);
+    })
+
+    it('should not allow to transfer ownership to more than 256 owners', async function() {
+        const obj = await Multiownable.new();
+        await obj.transferOwnership([
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+            _,
+        ]).should.be.rejectedWith(EVMThrow);
+    })
+
 })
