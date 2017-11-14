@@ -16,10 +16,11 @@ On macOS you also need to install watchman: `brew install watchman`
 
 # Features
 
-1. Simple usage: add modifiers `onlyAnyOwner` and `onlyManyOwners`
-1. Support multiple pending operations
-2. Allows owners to cancel pending operations
-2. Reset all pending operations on ownership transfering
+1. Supports up to 256 simultaneous owners
+2. Simple usage: add modifiers `onlyAnyOwner` and `onlyManyOwners`
+3. Supports multiple pending operations
+4. Allows owners to cancel pending operations
+5. Reset all pending operations on ownership transfering
 
 # Example of multisig wallet
 
