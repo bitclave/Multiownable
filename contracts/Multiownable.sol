@@ -109,6 +109,7 @@ contract Multiownable {
     */
     function transferOwnership(address[] newOwners) public onlyManyOwners {
         require(newOwners.length > 0);
+        require(newOwners.length <= 256);
         for (uint i = 0; i < newOwners.length; i++) {
             require(newOwners[i] != address(0));
         }
@@ -120,6 +121,7 @@ contract Multiownable {
             delete ownersIndices[owners[i]];
         }
         for (i = 0; i < newOwners.length; i++) {
+            require(ownersIndices[newOwners[i]] == 0);
             ownersIndices[newOwners[i]] = i + 1;
         }
         owners = newOwners;
