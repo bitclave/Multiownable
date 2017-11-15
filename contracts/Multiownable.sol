@@ -123,10 +123,10 @@ contract Multiownable {
     * @param newHowManyOwnersDecide defines how many owners can decide
     */
     function transferOwnershipWithHowMany(address[] newOwners, uint256 newHowManyOwnersDecide) public onlyManyOwners {
-        require(newHowManyOwnersDecide > 0);
-        require(newHowManyOwnersDecide <= newOwners.length);
         require(newOwners.length > 0);
         require(newOwners.length <= 256);
+        require(newHowManyOwnersDecide > 0);
+        require(newHowManyOwnersDecide <= newOwners.length);
         for (uint i = 0; i < newOwners.length; i++) {
             require(newOwners[i] != address(0));
         }
