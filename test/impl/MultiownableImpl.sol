@@ -15,4 +15,12 @@ contract MultiownableImpl is Multiownable {
         value = _value;
     }
 
+    function nestedFirst(uint _value) public onlyManyOwners {
+        nestedSecond(_value);
+    }
+
+    function nestedSecond(uint _value) public onlyManyOwners {
+        value = _value;
+    }
+
 }
