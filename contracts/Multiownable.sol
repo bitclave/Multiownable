@@ -147,6 +147,7 @@ contract Multiownable {
         // Discard all pendign operations
         for (i = 0; i < allOperations.length; i++) {
             delete votesMaskByOperation[allOperations[i]];
+            delete votesCountByOperation[allOperations[i]];
         }
         allOperations.length = 0;
     }
