@@ -7,6 +7,7 @@ contract Multiownable {
 
     address[] public owners;
     bytes32[] public allOperations;
+    bool insideOnlyManyOwners = false;
     
     // Reverse lookup table for owners
     mapping(address => uint) public ownersIndices; // Starts from 1
@@ -46,10 +47,15 @@ contract Multiownable {
     * @dev Allows to perform method only after all owners call it with the same arguments
     */
     modifier onlyManyOwners {
+        if (insideOnlyManyOwners) {
+            _;
+            return;
+        }
         require(isOwner(msg.sender));
 
         uint ownerIndex = ownersIndices[msg.sender] - 1;
         bytes32 operation = keccak256(msg.data);
+        
         if (votesMaskByOperation[operation] == 0) {
             allOperations.push(operation);
         }
@@ -58,8 +64,10 @@ contract Multiownable {
 
         // If all owners confirm same operation
         if (votesMaskByOperation[operation] == (2 ** owners.length) - 1) {
-            deleteOperation(operation);
+            insideOnlyManyOwners = true;
             _;
+            insideOnlyManyOwners = false;
+            deleteOperation(operation);
         }
     }
 
