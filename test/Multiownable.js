@@ -180,6 +180,50 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
         (await obj.isOwner.call(wallet5)).should.be.true;
     })
 
+    it('should transfer ownership 1,2 of 3 => 2 correctly', async function() {
+        const obj = await Multiownable.new();
+
+        await obj.transferOwnershipWithHowMany([wallet1, wallet2, wallet3], 2);
+        await obj.transferOwnership([wallet4, wallet5], {from: wallet1});
+        await obj.transferOwnership([wallet4, wallet5], {from: wallet2});
+        
+        (await obj.owners.call(0)).should.be.equal(wallet4);
+        (await obj.owners.call(1)).should.be.equal(wallet5);
+        (await obj.ownersCount.call()).should.be.bignumber.equal(2);
+    })
+
+    it('should transfer ownership 2,3 of 3 => 2 correctly', async function() {
+        const obj = await Multiownable.new();
+
+        await obj.transferOwnershipWithHowMany([wallet1, wallet2, wallet3], 2);
+        await obj.transferOwnership([wallet4, wallet5], {from: wallet2});
+        await obj.transferOwnership([wallet4, wallet5], {from: wallet3});
+        
+        (await obj.owners.call(0)).should.be.equal(wallet4);
+        (await obj.owners.call(1)).should.be.equal(wallet5);
+        (await obj.ownersCount.call()).should.be.bignumber.equal(2);
+    })
+
+    it('should transfer ownership 1,3 of 3 => 2 correctly', async function() {
+        const obj = await Multiownable.new();
+
+        await obj.transferOwnershipWithHowMany([wallet1, wallet2, wallet3], 2);
+        await obj.transferOwnership([wallet4, wallet5], {from: wallet1});
+        await obj.transferOwnership([wallet4, wallet5], {from: wallet3});
+        
+        (await obj.owners.call(0)).should.be.equal(wallet4);
+        (await obj.owners.call(1)).should.be.equal(wallet5);
+        (await obj.ownersCount.call()).should.be.bignumber.equal(2);
+    })
+
+    it('should not transfer ownership with wrong how many argument', async function() {
+        const obj = await Multiownable.new();
+
+        await obj.transferOwnershipWithHowMany([wallet1], 0).should.be.rejectedWith(EVMThrow);
+        await obj.transferOwnershipWithHowMany([wallet1, wallet2], 3).should.be.rejectedWith(EVMThrow);
+        await obj.transferOwnershipWithHowMany([wallet1, wallet2], 4).should.be.rejectedWith(EVMThrow);
+    })
+
     it('should correctly manage allOperations array', async function() {
         const obj = await Multiownable.new();
 

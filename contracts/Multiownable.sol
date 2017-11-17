@@ -5,6 +5,7 @@ contract Multiownable {
 
     // VARIABLES
 
+    uint256 public howManyOwnersDecide;
     address[] public owners;
     bytes32[] public allOperations;
     bool insideOnlyManyOwners = false;
@@ -14,6 +15,7 @@ contract Multiownable {
     
     // Owners voting mask per operations
     mapping(bytes32 => uint256) public votesMaskByOperation;
+    mapping(bytes32 => uint256) public votesCountByOperation;
     
     // EVENTS
 
@@ -61,9 +63,10 @@ contract Multiownable {
         }
         require((votesMaskByOperation[operation] & (2 ** ownerIndex)) == 0);
         votesMaskByOperation[operation] |= (2 ** ownerIndex);
+        votesCountByOperation[operation] += 1;
 
         // If all owners confirm same operation
-        if (votesMaskByOperation[operation] == (2 ** owners.length) - 1) {
+        if (votesCountByOperation[operation] == howManyOwnersDecide) {
             insideOnlyManyOwners = true;
             _;
             insideOnlyManyOwners = false;
@@ -76,6 +79,7 @@ contract Multiownable {
     function Multiownable() public {
         owners.push(msg.sender);
         ownersIndices[msg.sender] = 1;
+        howManyOwnersDecide = 1;
     }
 
     // INTERNAL METHODS
@@ -86,6 +90,7 @@ contract Multiownable {
     */
     function deleteOperation(bytes32 operation) internal {
         delete votesMaskByOperation[operation];
+        delete votesCountByOperation[operation];
         for (uint i = 0; i < allOperations.length; i++) {
             if (allOperations[i] == operation) {
                 allOperations[i] = allOperations[allOperations.length - 1];
@@ -106,7 +111,8 @@ contract Multiownable {
         require((votesMaskByOperation[operation] & (2 ** ownerIndex)) != 0);
         
         votesMaskByOperation[operation] &= ~(2 ** ownerIndex);
-        if (votesMaskByOperation[operation] == 0) {
+        votesCountByOperation[operation]--;
+        if (votesCountByOperation[operation] == 0) {
             deleteOperation(operation);
         }
     }
@@ -115,9 +121,20 @@ contract Multiownable {
     * @dev Allows owners to change ownership
     * @param newOwners defines array of addresses of new owners
     */
-    function transferOwnership(address[] newOwners) public onlyManyOwners {
+    function transferOwnership(address[] newOwners) public {
+        transferOwnershipWithHowMany(newOwners, newOwners.length);
+    }
+
+    /**
+    * @dev Allows owners to change ownership
+    * @param newOwners defines array of addresses of new owners
+    * @param newHowManyOwnersDecide defines how many owners can decide
+    */
+    function transferOwnershipWithHowMany(address[] newOwners, uint256 newHowManyOwnersDecide) public onlyManyOwners {
         require(newOwners.length > 0);
         require(newOwners.length <= 256);
+        require(newHowManyOwnersDecide > 0);
+        require(newHowManyOwnersDecide <= newOwners.length);
         for (uint i = 0; i < newOwners.length; i++) {
             require(newOwners[i] != address(0));
         }
@@ -133,10 +150,12 @@ contract Multiownable {
             ownersIndices[newOwners[i]] = i + 1;
         }
         owners = newOwners;
+        howManyOwnersDecide = newHowManyOwnersDecide;
 
         // Discard all pendign operations
         for (i = 0; i < allOperations.length; i++) {
             delete votesMaskByOperation[allOperations[i]];
+            delete votesCountByOperation[allOperations[i]];
         }
         allOperations.length = 0;
     }
