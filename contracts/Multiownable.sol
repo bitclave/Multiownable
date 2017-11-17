@@ -10,8 +10,9 @@ contract Multiownable {
     bytes32[] public allOperations;
     bool insideOnlyManyOwners = false;
     
-    // Reverse lookup table for owners
-    mapping(address => uint) public ownersIndices; // Starts from 1
+    // Reverse lookup tables for owners and allOperations
+    mapping(address => uint) ownersIndices; // Starts from 1
+    mapping(bytes32 => uint) allOperationsIndicies;
     
     // Owners voting mask per operations
     mapping(bytes32 => uint256) public votesMaskByOperation;
@@ -59,6 +60,7 @@ contract Multiownable {
         bytes32 operation = keccak256(msg.data);
         
         if (votesMaskByOperation[operation] == 0) {
+            allOperationsIndicies[operation] = allOperations.length;
             allOperations.push(operation);
         }
         require((votesMaskByOperation[operation] & (2 ** ownerIndex)) == 0);
@@ -67,10 +69,10 @@ contract Multiownable {
 
         // If all owners confirm same operation
         if (votesCountByOperation[operation] == howManyOwnersDecide) {
+            deleteOperation(operation);
             insideOnlyManyOwners = true;
             _;
             insideOnlyManyOwners = false;
-            deleteOperation(operation);
         }
     }
 
@@ -89,15 +91,16 @@ contract Multiownable {
     * @param operation defines which operation to delete
     */
     function deleteOperation(bytes32 operation) internal {
+        uint index = allOperationsIndicies[operation];
+        if (allOperations.length > 1) {
+            allOperations[index] = allOperations[allOperations.length - 1];
+            allOperationsIndicies[allOperations[index]] = index;
+        }
+        allOperations.length--;
+        
         delete votesMaskByOperation[operation];
         delete votesCountByOperation[operation];
-        for (uint i = 0; i < allOperations.length; i++) {
-            if (allOperations[i] == operation) {
-                allOperations[i] = allOperations[allOperations.length - 1];
-                allOperations.length--;
-                break;
-            }
-        }
+        delete allOperationsIndicies[operation];
     }
 
     // PUBLIC METHODS
@@ -156,6 +159,7 @@ contract Multiownable {
         for (i = 0; i < allOperations.length; i++) {
             delete votesMaskByOperation[allOperations[i]];
             delete votesCountByOperation[allOperations[i]];
+            delete allOperationsIndicies[allOperations[i]];
         }
         allOperations.length = 0;
     }
