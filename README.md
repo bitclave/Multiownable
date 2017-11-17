@@ -27,11 +27,16 @@ On macOS you also need to install watchman: `brew install watchman`
 ```solidity
 contract SimplestMultiWallet is Multiownable {
 
+    bool avoidReentrancy = false;
+
     function () public payable {
     }
 
     function transferTo(address to, uint256 amount) public onlyManyOwners {
+        require(!avoidReentrancy);
+        avoidReentrancy = true;
         to.transfer(amount);
+        avoidReentrancy = false;
     }
     
 }
@@ -42,15 +47,23 @@ contract SimplestMultiWallet is Multiownable {
 ```solidity
 contract SimplestTokensMultiWallet is Multiownable {
 
+    bool avoidReentrancy = false;
+
     function () public payable {
     }
     
     function transferTo(address to, uint256 amount) public onlyManyOwners {
+        require(!avoidReentrancy);
+        avoidReentrancy = true;
         to.transfer(amount);
+        avoidReentrancy = false;
     }
     
     function transferTokensTo(address token, address to, uint256 amount) public onlyManyOwners {
+        require(!avoidReentrancy);
+        avoidReentrancy = true;
         ERC20(token).transfer(to, amount);
+        avoidReentrancy = false;
     }
     
 }
