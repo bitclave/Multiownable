@@ -387,6 +387,16 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
         (await obj.value.call()).should.be.bignumber.equal(100);
     })
 
+    it('should works for nested methods with onlyOwner_overrideForManyOwners modifier', async function() {
+        const obj = await MultisigMintableToken.new();
+        await obj.transferOwnership([wallet1, wallet2]);
+
+        await obj.nestedFirst(100, {from: wallet1});
+        await obj.nestedFirst(100, {from: wallet2});
+
+        (await obj.value.call()).should.be.bignumber.equal(100);
+    })
+
     it('should not allow to transfer ownership to several equal users', async function() {
         const obj = await Multiownable.new();
         await obj.transferOwnership([wallet1, wallet1]).should.be.rejectedWith(EVMThrow);
