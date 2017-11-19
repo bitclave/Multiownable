@@ -29,9 +29,9 @@ contract('MultiAttack', function ([_, wallet1, wallet2, wallet3, wallet4, wallet
 
         // Try reentrace attack
         await victim.transferTo(hacker.address, ether(1), {from: wallet1});
-        await victim.transferTo(hacker.address, ether(1), {from: wallet2});
+        await victim.transferTo(hacker.address, ether(1), {from: wallet2}).should.be.rejectedWith(EVMThrow);
 
-        (await web3.eth.getBalance(victim.address)).should.be.bignumber.equal(ether(0));
+        (await web3.eth.getBalance(victim.address)).should.be.bignumber.equal(ether(3));
     })
 
 })
