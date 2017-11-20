@@ -8,7 +8,7 @@ contract Multiownable {
     uint256 public howManyOwnersDecide;
     address[] public owners;
     bytes32[] public allOperations;
-    bool insideOnlyManyOwners = false;
+    address insideOnlyManyOwners;
     
     // Reverse lookup tables for owners and allOperations
     mapping(address => uint) ownersIndices; // Starts from 1
@@ -50,7 +50,7 @@ contract Multiownable {
     * @dev Allows to perform method only after all owners call it with the same arguments
     */
     modifier onlyManyOwners {
-        if (insideOnlyManyOwners) {
+        if (insideOnlyManyOwners == msg.sender) {
             _;
             return;
         }
@@ -70,9 +70,9 @@ contract Multiownable {
         // If all owners confirm same operation
         if (votesCountByOperation[operation] == howManyOwnersDecide) {
             deleteOperation(operation);
-            insideOnlyManyOwners = true;
+            insideOnlyManyOwners = msg.sender;
             _;
-            insideOnlyManyOwners = false;
+            insideOnlyManyOwners = address(0);
         }
     }
 
