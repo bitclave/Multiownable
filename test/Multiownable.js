@@ -12,7 +12,7 @@ import ether from './helpers/ether';
 import {advanceBlock} from './helpers/advanceToBlock';
 import {increaseTimeTo, duration} from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
-import EVMThrow from './helpers/EVMThrow';
+import EVMRevert from './helpers/EVMRevert';
 
 const Multiownable = artifacts.require('Multiownable.sol');
 const MultiownableImpl = artifacts.require('./impl/MultiownableImpl.sol');
@@ -219,9 +219,9 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
     it('should not transfer ownership with wrong how many argument', async function() {
         const obj = await Multiownable.new();
 
-        await obj.transferOwnershipWithHowMany([wallet1], 0).should.be.rejectedWith(EVMThrow);
-        await obj.transferOwnershipWithHowMany([wallet1, wallet2], 3).should.be.rejectedWith(EVMThrow);
-        await obj.transferOwnershipWithHowMany([wallet1, wallet2], 4).should.be.rejectedWith(EVMThrow);
+        await obj.transferOwnershipWithHowMany([wallet1], 0).should.be.rejectedWith(EVMRevert);
+        await obj.transferOwnershipWithHowMany([wallet1, wallet2], 3).should.be.rejectedWith(EVMRevert);
+        await obj.transferOwnershipWithHowMany([wallet1, wallet2], 4).should.be.rejectedWith(EVMRevert);
     })
 
     it('should correctly manage allOperations array', async function() {
@@ -330,8 +330,8 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
         await obj.transferOwnership([wallet1, wallet2]);
         
         // Not owners try to call
-        await obj.setValueAny(1, {from: _}).should.be.rejectedWith(EVMThrow);
-        await obj.setValueAny(1, {from: wallet3}).should.be.rejectedWith(EVMThrow);
+        await obj.setValueAny(1, {from: _}).should.be.rejectedWith(EVMRevert);
+        await obj.setValueAny(1, {from: wallet3}).should.be.rejectedWith(EVMRevert);
 
         // Owners try to call
         await obj.setValueAny(2, {from: wallet1}).should.be.fulfilled;
@@ -345,12 +345,12 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
         await obj.transferOwnership([wallet1, wallet2]);
         
         // Not owners try to call
-        await obj.setValue(1, {from: _}).should.be.rejectedWith(EVMThrow);
-        await obj.setValue(1, {from: wallet3}).should.be.rejectedWith(EVMThrow);
+        await obj.setValue(1, {from: _}).should.be.rejectedWith(EVMRevert);
+        await obj.setValue(1, {from: wallet3}).should.be.rejectedWith(EVMRevert);
 
         // Single owners try to call twice
         await obj.setValue(2, {from: wallet1}).should.be.fulfilled;
-        await obj.setValue(2, {from: wallet1}).should.be.rejectedWith(EVMThrow);
+        await obj.setValue(2, {from: wallet1}).should.be.rejectedWith(EVMRevert);
     })
 
     it('should not allow to cancel pending of another owner', async function() {
@@ -362,18 +362,18 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
 
         // Second owner
         const operation = await obj.allOperations.call(0);
-        await obj.cancelPending(operation, {from: wallet2}).should.be.rejectedWith(EVMThrow);
+        await obj.cancelPending(operation, {from: wallet2}).should.be.rejectedWith(EVMRevert);
     })
 
     it('should not allow to transfer ownership to no one and to user 0', async function() {
         const obj = await Multiownable.new();
-        await obj.transferOwnership([]).should.be.rejectedWith(EVMThrow);
-        await obj.transferOwnership([0]).should.be.rejectedWith(EVMThrow);
-        await obj.transferOwnership([0, wallet1]).should.be.rejectedWith(EVMThrow);
-        await obj.transferOwnership([wallet1, 0]).should.be.rejectedWith(EVMThrow);
-        await obj.transferOwnership([0, wallet1, wallet2]).should.be.rejectedWith(EVMThrow);
-        await obj.transferOwnership([wallet1, 0, wallet2]).should.be.rejectedWith(EVMThrow);
-        await obj.transferOwnership([wallet1, wallet2, 0]).should.be.rejectedWith(EVMThrow);
+        await obj.transferOwnership([]).should.be.rejectedWith(EVMRevert);
+        await obj.transferOwnership([0]).should.be.rejectedWith(EVMRevert);
+        await obj.transferOwnership([0, wallet1]).should.be.rejectedWith(EVMRevert);
+        await obj.transferOwnership([wallet1, 0]).should.be.rejectedWith(EVMRevert);
+        await obj.transferOwnership([0, wallet1, wallet2]).should.be.rejectedWith(EVMRevert);
+        await obj.transferOwnership([wallet1, 0, wallet2]).should.be.rejectedWith(EVMRevert);
+        await obj.transferOwnership([wallet1, wallet2, 0]).should.be.rejectedWith(EVMRevert);
     })
 
     it('should works for nested methods with onlyManyOwners modifier', async function() {
@@ -388,8 +388,8 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
 
     it('should not allow to transfer ownership to several equal users', async function() {
         const obj = await Multiownable.new();
-        await obj.transferOwnership([wallet1, wallet1]).should.be.rejectedWith(EVMThrow);
-        await obj.transferOwnership([wallet1, wallet2, wallet1]).should.be.rejectedWith(EVMThrow);
+        await obj.transferOwnership([wallet1, wallet1]).should.be.rejectedWith(EVMRevert);
+        await obj.transferOwnership([wallet1, wallet2, wallet1]).should.be.rejectedWith(EVMRevert);
     })
 
     it('should not allow to transfer ownership to more than 256 owners', async function() {
@@ -412,7 +412,7 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
             _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
             _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
             _,
-        ]).should.be.rejectedWith(EVMThrow);
+        ]).should.be.rejectedWith(EVMRevert);
     })
 
 })
