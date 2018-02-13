@@ -13,7 +13,7 @@
     "eslint-plugin-react": "^7.6.1",
     "ethereumjs-util": "^5.1.4",
     "ethereumjs-wallet": "^0.6.0",
-    "web3": "^0.18.4",
+    "web3": "^1.0.0-beta.29",
     "web3-provider-engine": "^13.6.4",
     "zeppelin-solidity": "^1.6.0"
   },
@@ -29,16 +29,17 @@
     "eslint": "^4.17.0",
     "eslint-config-standard": "^10.2.1",
     "eslint-plugin-import": "^2.8.0",
-    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-node": "^6.0.0",
     "eslint-plugin-promise": "^3.6.0",
     "eslint-plugin-standard": "^3.0.1",
-    "solidity-coverage": "^0.2.7",
-    "solium": "^0.5.5",
-    "truffle": "^3.4.11"
+    "ganache-core": "^2.0.2",
+    "solidity-coverage": "^0.4.9",
+    "solium": "^1.1.3",
+    "truffle": "^4.0.6"
   },
   "scripts": {
-    "test": "scripts/test.sh",
-    "coverage": "scripts/coverage.sh",
+    "test": "truffle test",
+    "coverage": "./node_modules/.bin/solidity-coverage",
     "rpc": "scripts/rpc.sh"
   },
   "repository": {
