@@ -12,7 +12,7 @@ import ether from './helpers/ether';
 import {advanceBlock} from './helpers/advanceToBlock';
 import {increaseTimeTo, duration} from './helpers/increaseTime';
 import latestTime from './helpers/latestTime';
-import EVMThrow from './helpers/EVMThrow';
+import EVMRevert from './helpers/EVMRevert';
 
 const MultiAttackable = artifacts.require('./impl/MultiAttackable.sol');
 const MultiAttacker = artifacts.require('./impl/MultiAttacker.sol');
@@ -29,7 +29,7 @@ contract('MultiAttack', function ([_, wallet1, wallet2, wallet3, wallet4, wallet
 
         // Try reentrace attack
         await victim.transferTo(hacker.address, ether(1), {from: wallet1});
-        await victim.transferTo(hacker.address, ether(1), {from: wallet2}).should.be.rejectedWith(EVMThrow);
+        await victim.transferTo(hacker.address, ether(1), {from: wallet2}).should.be.rejectedWith(EVMRevert);
 
         (await web3.eth.getBalance(victim.address)).should.be.bignumber.equal(ether(3));
     })
