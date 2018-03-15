@@ -92,7 +92,7 @@ contract Multiownable {
     */
     function deleteOperation(bytes32 operation) internal {
         uint index = allOperationsIndicies[operation];
-        if (allOperations.length > 1) {
+        if (index < allOperations.length - 1) {
             allOperations[index] = allOperations[allOperations.length - 1];
             allOperationsIndicies[allOperations[index]] = index;
         }
