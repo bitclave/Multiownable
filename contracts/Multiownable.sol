@@ -9,15 +9,15 @@ contract Multiownable {
     address[] public owners;
     bytes32[] public allOperations;
     address insideOnlyManyOwners;
-    
+
     // Reverse lookup tables for owners and allOperations
     mapping(address => uint) ownersIndices; // Starts from 1
     mapping(bytes32 => uint) allOperationsIndicies;
-    
+
     // Owners voting mask per operations
     mapping(bytes32 => uint256) public votesMaskByOperation;
     mapping(bytes32 => uint256) public votesCountByOperation;
-    
+
     // EVENTS
 
     event OwnershipTransferred(address[] previousOwners, address[] newOwners);
@@ -58,7 +58,7 @@ contract Multiownable {
 
         uint ownerIndex = ownersIndices[msg.sender] - 1;
         bytes32 operation = keccak256(msg.data);
-        
+
         if (votesMaskByOperation[operation] == 0) {
             allOperationsIndicies[operation] = allOperations.length;
             allOperations.push(operation);
@@ -92,12 +92,12 @@ contract Multiownable {
     */
     function deleteOperation(bytes32 operation) internal {
         uint index = allOperationsIndicies[operation];
-        if (allOperations.length > 1) {
+        if (index < allOperations.length - 1) {
             allOperations[index] = allOperations[allOperations.length - 1];
             allOperationsIndicies[allOperations[index]] = index;
         }
         allOperations.length--;
-        
+
         delete votesMaskByOperation[operation];
         delete votesCountByOperation[operation];
         delete allOperationsIndicies[operation];
@@ -112,7 +112,7 @@ contract Multiownable {
     function cancelPending(bytes32 operation) public onlyAnyOwner {
         uint ownerIndex = ownersIndices[msg.sender] - 1;
         require((votesMaskByOperation[operation] & (2 ** ownerIndex)) != 0);
-        
+
         votesMaskByOperation[operation] &= ~(2 ** ownerIndex);
         votesCountByOperation[operation]--;
         if (votesCountByOperation[operation] == 0) {
