@@ -39,7 +39,7 @@ contract SimplestMultiWallet is Multiownable {
         to.transfer(amount);
         avoidReentrancy = false;
     }
-    
+
 }
 ```
 
@@ -52,20 +52,20 @@ contract SimplestTokensMultiWallet is Multiownable {
 
     function () public payable {
     }
-    
+
     function transferTo(address to, uint256 amount) public onlyManyOwners {
         require(!avoidReentrancy);
         avoidReentrancy = true;
         to.transfer(amount);
         avoidReentrancy = false;
     }
-    
+
     function transferTokensTo(address token, address to, uint256 amount) public onlyManyOwners {
         require(!avoidReentrancy);
         avoidReentrancy = true;
         ERC20(token).transfer(to, amount);
         avoidReentrancy = false;
     }
-    
+
 }
 ```
