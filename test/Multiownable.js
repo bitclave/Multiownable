@@ -292,6 +292,34 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
         (await obj.allOperationsCount.call()).should.be.bignumber.equal(0);
     })
 
+    it('should correctly perform last operation', async function() {
+        const obj = await MultiownableImpl.new();
+        await obj.transferOwnership([wallet1, wallet2]);
+
+        await obj.setValue(1, {from: wallet1});
+        (await obj.allOperationsCount.call()).should.be.bignumber.equal(1);
+
+        await obj.transferOwnership([wallet3], {from: wallet1});
+        (await obj.allOperationsCount.call()).should.be.bignumber.equal(2);
+
+        await obj.transferOwnership([wallet3], {from: wallet2});
+        (await obj.owners.call(0)).should.be.equal(wallet3);
+    })
+
+    it('should correctly perform not last operation', async function() {
+        const obj = await MultiownableImpl.new();
+        await obj.transferOwnership([wallet1, wallet2]);
+
+        await obj.setValue(1, {from: wallet1});
+        (await obj.allOperationsCount.call()).should.be.bignumber.equal(1);
+
+        await obj.transferOwnership([wallet3], {from: wallet1});
+        (await obj.allOperationsCount.call()).should.be.bignumber.equal(2);
+
+        await obj.setValue(1, {from: wallet2});
+        (await obj.value.call()).should.be.bignumber.equal(1);
+    })
+
     it('should handle multiple simultaneous operations correctly', async function() {
         const obj = await MultiownableImpl.new();
         await obj.transferOwnership([wallet1, wallet2]);
