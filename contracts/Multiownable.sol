@@ -8,7 +8,7 @@ contract Multiownable {
     uint256 public howManyOwnersDecide;
     address[] public owners;
     bytes32[] public allOperations;
-    address insideOnlyManyOwners;
+    address internal insideOnlyManyOwners;
 
     // Reverse lookup tables for owners and allOperations
     mapping(address => uint) ownersIndices; // Starts from 1
