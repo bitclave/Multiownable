@@ -6,18 +6,15 @@
   "directories": {
     "test": "test"
   },
-  "dependencies": {
-    "babel-eslint": "^8.2.2",
-    "bip39": "^2.5.0",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-eslint": "^8.2.3",
     "eslint-config-defaults": "^9.0.0",
     "eslint-plugin-react": "^7.7.0",
-    "ethereumjs-util": "^5.1.4",
+    "ethereumjs-util": "^5.1.5",
     "ethereumjs-wallet": "^0.6.0",
-    "web3": "^1.0.0-beta.30",
-    "web3-provider-engine": "^13.6.5",
-    "zeppelin-solidity": "^1.7.0"
-  },
-  "devDependencies": {
+    "web3": "^0.19.0",
+    "zeppelin-solidity": "^1.8.0",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.6.1",
     "babel-preset-flow": "^6.23.0",
@@ -26,19 +23,25 @@
     "chai-as-promised": "^7.1.1",
     "chai-bignumber": "^2.0.2",
     "coveralls": "^3.0.0",
-    "eslint": "^4.18.1",
+    "eslint": "^4.19.1",
     "eslint-config-standard": "^11.0.0",
-    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-import": "^2.11.0",
     "eslint-plugin-node": "^6.0.1",
-    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-promise": "^3.7.0",
     "eslint-plugin-standard": "^3.0.1",
-    "ganache-core": "^2.0.2",
-    "solidity-coverage": "^0.4.10",
-    "solium": "^1.1.5",
-    "truffle": "^4.0.6"
+    "ganache-core": "^2.1.0",
+    "solidity-coverage": "^0.4.15",
+    "solium": "^1.1.6",
+    "truffle": "^4.1.6"
   },
   "scripts": {
     "test": "truffle test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:sol": "solium -d .",
+    "lint:sol:fix": "solium -d . --fix",
+    "lint:all": "npm run lint && npm run lint:sol",
+    "lint:all:fix": "npm run lint:fix && npm run lint:sol:fix",
     "coverage": "./node_modules/.bin/solidity-coverage",
     "rpc": "scripts/rpc.sh"
   },
