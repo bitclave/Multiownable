@@ -12,7 +12,9 @@ install:
   - npm install -g ganache-cli
   - npm install
 script:
-  - npm test
+  - npm run lint
+  - npm run lint:sol
+  - npm run test
 before_script:
   - scripts/rpc.sh > /dev/null &
   - sleep 5
