@@ -9,12 +9,12 @@ contract Multiownable {
     uint256 public howManyOwnersDecide;
     address[] public owners;
     bytes32[] public allOperations;
-    address internal insideOnlyManyOwners;
-    uint internal insideOnlyManyOwnersCount;
+    address internal insideCallSender;
+    uint internal insideCallCount;
 
     // Reverse lookup tables for owners and allOperations
-    mapping(address => uint) ownersIndices; // Starts from 1
-    mapping(bytes32 => uint) allOperationsIndicies;
+    mapping(address => uint) public ownersIndices; // Starts from 1
+    mapping(bytes32 => uint) public allOperationsIndicies;
 
     // Owners voting mask per operations
     mapping(bytes32 => uint256) public votesMaskByOperation;
@@ -45,15 +45,15 @@ contract Multiownable {
     */
     modifier onlyAnyOwner {
         if (checkHowManyOwners(1)) {
-            bool update = (insideOnlyManyOwners == address(0));
+            bool update = (insideCallSender == address(0));
             if (update) {
-                insideOnlyManyOwners = msg.sender;
-                insideOnlyManyOwnersCount = 1;
+                insideCallSender = msg.sender;
+                insideCallCount = 1;
             }
             _;
             if (update) {
-                insideOnlyManyOwners = address(0);
-                insideOnlyManyOwnersCount = 0;
+                insideCallSender = address(0);
+                insideCallCount = 0;
             }
         }
     }
@@ -63,15 +63,15 @@ contract Multiownable {
     */
     modifier onlyManyOwners {
         if (checkHowManyOwners(howManyOwnersDecide)) {
-            bool update = (insideOnlyManyOwners == address(0));
+            bool update = (insideCallSender == address(0));
             if (update) {
-                insideOnlyManyOwners = msg.sender;
-                insideOnlyManyOwnersCount = howManyOwnersDecide;
+                insideCallSender = msg.sender;
+                insideCallCount = howManyOwnersDecide;
             }
             _;
             if (update) {
-                insideOnlyManyOwners = address(0);
-                insideOnlyManyOwnersCount = 0;
+                insideCallSender = address(0);
+                insideCallCount = 0;
             }
         }
     }
@@ -81,15 +81,15 @@ contract Multiownable {
     */
     modifier onlyAllOwners {
         if (checkHowManyOwners(owners.length)) {
-            bool update = (insideOnlyManyOwners == address(0));
+            bool update = (insideCallSender == address(0));
             if (update) {
-                insideOnlyManyOwners = msg.sender;
-                insideOnlyManyOwnersCount = owners.length;
+                insideCallSender = msg.sender;
+                insideCallCount = owners.length;
             }
             _;
             if (update) {
-                insideOnlyManyOwners = address(0);
-                insideOnlyManyOwnersCount = 0;
+                insideCallSender = address(0);
+                insideCallCount = 0;
             }
         }
     }
@@ -102,15 +102,15 @@ contract Multiownable {
         require(howMany <= owners.length);
         
         if (checkHowManyOwners(howMany)) {
-            bool update = (insideOnlyManyOwners == address(0));
+            bool update = (insideCallSender == address(0));
             if (update) {
-                insideOnlyManyOwners = msg.sender;
-                insideOnlyManyOwnersCount = howMany;
+                insideCallSender = msg.sender;
+                insideCallCount = howMany;
             }
             _;
             if (update) {
-                insideOnlyManyOwners = address(0);
-                insideOnlyManyOwnersCount = 0;
+                insideCallSender = address(0);
+                insideCallCount = 0;
             }
         }
     }
@@ -131,8 +131,8 @@ contract Multiownable {
     function checkHowManyOwners(uint howMany) internal returns(bool) {
         require(isOwner(msg.sender));
 
-        if (insideOnlyManyOwners == msg.sender) {
-            require(howMany <= insideOnlyManyOwnersCount);
+        if (insideCallSender == msg.sender) {
+            require(howMany <= insideCallCount);
             return true;
         }
 
