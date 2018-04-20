@@ -11,12 +11,12 @@ install:
   - npm install -g truffle
   - npm install -g ganache-cli
   - npm install
+before_script:
+  - scripts/rpc.sh > /dev/null &
+  - sleep 5
 script:
   - npm run lint
   - npm run lint:sol
   - npm run test
-before_script:
-  - scripts/rpc.sh > /dev/null &
-  - sleep 5
 after_script:
   - npm run coverage && cat coverage/lcov.info | coveralls
