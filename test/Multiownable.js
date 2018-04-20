@@ -372,6 +372,20 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
         await obj.setValue(2, { from: wallet1 }).should.be.rejectedWith(EVMRevert);
     });
 
+    it('should allow to call onlyAllOwners methods properly', async function () {
+        const obj = await MultiownableImpl.new();
+        await obj.transferOwnershipWithHowMany([wallet1, wallet2], 1);
+
+        // Not owners try to call
+        await obj.setValueAll(1, { from: _ }).should.be.rejectedWith(EVMRevert);
+        await obj.setValueAll(1, { from: wallet3 }).should.be.rejectedWith(EVMRevert);
+
+        // Single owners try to call twice
+        await obj.setValueAll(2, { from: wallet1 }).should.be.fulfilled;
+        await obj.setValueAll(2, { from: wallet2 }).should.be.fulfilled;
+        (await obj.value.call()).should.be.bignumber.equal(2);
+    });
+
     it('should allow to call onlySomeOwners(n) methods properly', async function () {
         const obj = await MultiownableImpl.new();
         await obj.transferOwnership([wallet1, wallet2]);
