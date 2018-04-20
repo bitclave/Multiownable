@@ -10,7 +10,7 @@ contract Multiownable {
     address[] public owners;
     bytes32[] public allOperations;
     address internal insideCallSender;
-    uint internal insideCallCount;
+    uint256 internal insideCallCount;
 
     // Reverse lookup tables for owners and allOperations
     mapping(address => uint) public ownersIndices; // Starts from 1
@@ -22,8 +22,13 @@ contract Multiownable {
 
     // EVENTS
 
-    event OwnershipTransferred(address[] previousOwners, address[] newOwners);
-
+    event OwnershipTransferred(address[] previousOwners, uint howManyOwnersDecide, address[] newOwners, uint newHowManyOwnersDecide);
+    event OperationCreated(bytes32 operation, uint howMany, uint ownersCount, address proposer);
+    event OperationUpvoted(bytes32 operation, uint votes, uint howMany, uint ownersCount, address upvoter);
+    event OperationPerformed(bytes32 operation, uint howMany, uint ownersCount, address performer);
+    event OperationDownvoted(bytes32 operation, uint votes, uint ownersCount,  address downvoter);
+    event OperationCancelled(bytes32 operation, address lastCanceller);
+    
     // ACCESSORS
 
     function isOwner(address wallet) public constant returns(bool) {
@@ -129,29 +134,33 @@ contract Multiownable {
      * @dev onlyManyOwners modifier helper
      */
     function checkHowManyOwners(uint howMany) internal returns(bool) {
-        require(isOwner(msg.sender), "checkHowManyOwners: msg.sender is not an owner");
-
         if (insideCallSender == msg.sender) {
             require(howMany <= insideCallCount, "checkHowManyOwners: nested owners modifier check require more owners");
             return true;
         }
 
         uint ownerIndex = ownersIndices[msg.sender] - 1;
+        require(ownerIndex < owners.length, "checkHowManyOwners: msg.sender is not an owner");
         bytes32 operation = keccak256(msg.data, ownersGeneration);
 
-        if (votesMaskByOperation[operation] == 0) {
-            allOperationsIndicies[operation] = allOperations.length;
-            allOperations.push(operation);
-        }
         require((votesMaskByOperation[operation] & (2 ** ownerIndex)) == 0, "checkHowManyOwners: owner already voted for the operation");
         votesMaskByOperation[operation] |= (2 ** ownerIndex);
-        votesCountByOperation[operation] += 1;
+        uint operationVotesCount = votesCountByOperation[operation] + 1;
+        votesCountByOperation[operation] = operationVotesCount;
+        if (operationVotesCount == 1) {
+            allOperationsIndicies[operation] = allOperations.length;
+            allOperations.push(operation);
+            emit OperationCreated(operation, howMany, owners.length, msg.sender);
+        }
+        emit OperationUpvoted(operation, operationVotesCount, howMany, owners.length, msg.sender);
 
-        // If all owners confirm same operation
+        // If enough owners confirmed the same operation
         if (votesCountByOperation[operation] == howMany) {
             deleteOperation(operation);
+            emit OperationPerformed(operation, howMany, owners.length, msg.sender);
             return true;
         }
+
         return false;
     }
 
@@ -160,8 +169,8 @@ contract Multiownable {
     * @param operation defines which operation to delete
     */
     function deleteOperation(bytes32 operation) internal {
-        uint index = allOperationsIndicies[operation];
-        if (index < allOperations.length - 1) {
+        uint index = allOperationsIndicies[operation]; // Index stays incemented
+        if (index < allOperations.length) { // Not last
             allOperations[index] = allOperations[allOperations.length - 1];
             allOperationsIndicies[allOperations[index]] = index;
         }
@@ -181,11 +190,13 @@ contract Multiownable {
     function cancelPending(bytes32 operation) public onlyAnyOwner {
         uint ownerIndex = ownersIndices[msg.sender] - 1;
         require((votesMaskByOperation[operation] & (2 ** ownerIndex)) != 0, "cancelPending: operation not found for this user");
-
         votesMaskByOperation[operation] &= ~(2 ** ownerIndex);
-        votesCountByOperation[operation]--;
-        if (votesCountByOperation[operation] == 0) {
+        uint operationVotesCount = votesCountByOperation[operation] - 1;
+        votesCountByOperation[operation] = operationVotesCount;
+        emit OperationDownvoted(operation, operationVotesCount, owners.length, msg.sender);
+        if (operationVotesCount == 0) {
             deleteOperation(operation);
+            emit OperationCancelled(operation, msg.sender);
         }
     }
 
@@ -207,20 +218,18 @@ contract Multiownable {
         require(newOwners.length <= 256, "transferOwnershipWithHowMany: owners count is greater then 256");
         require(newHowManyOwnersDecide > 0, "transferOwnershipWithHowMany: newHowManyOwnersDecide equal to 0");
         require(newHowManyOwnersDecide <= newOwners.length, "transferOwnershipWithHowMany: newHowManyOwnersDecide exceeds the number of owners");
+
+        // Reset owners reverse lookup table
+        for (uint j = 0; j < owners.length; j++) {
+            delete ownersIndices[owners[j]];
+        }
         for (uint i = 0; i < newOwners.length; i++) {
             require(newOwners[i] != address(0), "transferOwnershipWithHowMany: owners array contains zero");
-        }
-
-        emit OwnershipTransferred(owners, newOwners);
-
-        // Reset owners array and index reverse lookup table
-        for (i = 0; i < owners.length; i++) {
-            delete ownersIndices[owners[i]];
-        }
-        for (i = 0; i < newOwners.length; i++) {
             require(ownersIndices[newOwners[i]] == 0, "transferOwnershipWithHowMany: owners array contains duplicates");
             ownersIndices[newOwners[i]] = i + 1;
         }
+        
+        emit OwnershipTransferred(owners, howManyOwnersDecide, newOwners, newHowManyOwnersDecide);
         owners = newOwners;
         howManyOwnersDecide = newHowManyOwnersDecide;
         allOperations.length = 0;
