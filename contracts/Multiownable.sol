@@ -139,8 +139,6 @@ contract Multiownable {
         // If all owners confirm same operation
         if (votesCountByOperation[operation] == howMany) {
             deleteOperation(operation);
-            insideOnlyManyOwners = msg.sender;
-            insideOnlyManyOwnersCount = howMany;
             return true;
         }
         return false;
