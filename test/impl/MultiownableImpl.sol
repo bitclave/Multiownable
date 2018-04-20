@@ -31,6 +31,36 @@ contract MultiownableImpl is Multiownable {
         value = _value;
     }
 
+    //
+
+    function nestedFirstAllToAll(uint _value) public onlyAllOwners {
+        nestedSecondAllToAll(_value);
+    }
+
+    function nestedFirstAllToAll2(uint _value) public onlyAllOwners {
+        this.nestedSecondAllToAll(_value); // this.
+    }
+
+    function nestedSecondAllToAll(uint _value) public onlyAllOwners {
+        value = _value;
+    }
+
+    //
+
+    function nestedFirstAnyToAny(uint _value) public onlyAnyOwner {
+        nestedSecondAnyToAny(_value);
+    }
+
+    function nestedFirstAnyToAny2(uint _value) public onlyAnyOwner {
+        this.nestedSecondAnyToAny(_value); // this.
+    }
+
+    function nestedSecondAnyToAny(uint _value) public onlyAnyOwner {
+        value = _value;
+    }
+
+    //
+
     function nestedFirstManyToSome(uint _value, uint howMany) public onlyManyOwners {
         nestedSecondSome(_value, howMany);
     }

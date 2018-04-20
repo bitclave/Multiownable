@@ -438,7 +438,32 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
         (await obj.value.call()).should.be.bignumber.equal(100);
     });
 
-    it('should works for nested methods with onlyManyOwners => onlySomeOwners(n) modifier', async function () {
+    it('should works for nested methods with onlyAnyOwners modifier', async function () {
+        const obj = await MultiownableImpl.new();
+        await obj.transferOwnership([wallet1, wallet2]);
+
+        await obj.nestedFirstAnyToAny(100, { from: wallet3 }).should.be.rejectedWith(EVMRevert);
+        await obj.nestedFirstAnyToAny2(100, { from: wallet1 }).should.be.rejectedWith(EVMRevert);
+
+        await obj.nestedFirstAnyToAny(100, { from: wallet1 });
+        await obj.nestedFirstAnyToAny(100, { from: wallet2 });
+        (await obj.value.call()).should.be.bignumber.equal(100);
+    });
+
+    it('should works for nested methods with onlyAllOwners modifier', async function () {
+        const obj = await MultiownableImpl.new();
+        await obj.transferOwnership([wallet1, wallet2]);
+
+        await obj.nestedFirstAllToAll(100, { from: wallet3 }).should.be.rejectedWith(EVMRevert);
+        await obj.nestedFirstAllToAll2(100, { from: wallet1 }).should.be.fulfilled;
+        await obj.nestedFirstAllToAll2(100, { from: wallet2 }).should.be.rejectedWith(EVMRevert);
+
+        await obj.nestedFirstAllToAll(100, { from: wallet1 });
+        await obj.nestedFirstAllToAll(100, { from: wallet2 });
+        (await obj.value.call()).should.be.bignumber.equal(100);
+    });
+
+    it('should works for nested methods with onlyManyOwners => onlySomeOwners modifier', async function () {
         const obj = await MultiownableImpl.new();
         await obj.transferOwnership([wallet1, wallet2, wallet3]);
 
