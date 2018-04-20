@@ -372,6 +372,25 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
         await obj.setValue(2, { from: wallet1 }).should.be.rejectedWith(EVMRevert);
     });
 
+    it('should allow to call onlySomeOwners(n) methods properly', async function () {
+        const obj = await MultiownableImpl.new();
+        await obj.transferOwnership([wallet1, wallet2]);
+
+        // Invalid arg
+        await obj.setValueSome(1, 0, { from: _ }).should.be.rejectedWith(EVMRevert);
+        await obj.setValueSome(1, 3, { from: _ }).should.be.rejectedWith(EVMRevert);
+
+        // Not owners try to call
+        await obj.setValueSome(1, 1, { from: _ }).should.be.rejectedWith(EVMRevert);
+        await obj.setValueSome(1, 1, { from: wallet3 }).should.be.rejectedWith(EVMRevert);
+
+        // Owners try to call
+        await obj.setValueSome(5, 2, { from: wallet1 }).should.be.fulfilled;
+        (await obj.value.call()).should.be.bignumber.equal(0);
+        await obj.setValueSome(5, 2, { from: wallet2 }).should.be.fulfilled;
+        (await obj.value.call()).should.be.bignumber.equal(5);
+    });
+
     it('should not allow to cancel pending of another owner', async function () {
         const obj = await MultiownableImpl.new();
         await obj.transferOwnership([wallet1, wallet2]);
@@ -403,6 +422,44 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
         await obj.nestedFirst(100, { from: wallet2 });
 
         (await obj.value.call()).should.be.bignumber.equal(100);
+    });
+
+    it('should works for nested methods with onlyManyOwners => onlySomeOwners(n) modifier', async function () {
+        const obj = await MultiownableImpl.new();
+        await obj.transferOwnership([wallet1, wallet2, wallet3]);
+
+        await obj.nestedFirstManyToSome(100, 1, { from: wallet1 });
+        await obj.nestedFirstManyToSome(100, 1, { from: wallet2 });
+        await obj.nestedFirstManyToSome(100, 1, { from: wallet3 });
+        (await obj.value.call()).should.be.bignumber.equal(100);
+
+        await obj.nestedFirstManyToSome(200, 2, { from: wallet1 });
+        await obj.nestedFirstManyToSome(200, 2, { from: wallet2 });
+        await obj.nestedFirstManyToSome(200, 2, { from: wallet3 });
+        (await obj.value.call()).should.be.bignumber.equal(200);
+
+        await obj.nestedFirstManyToSome(300, 3, { from: wallet1 });
+        await obj.nestedFirstManyToSome(300, 3, { from: wallet2 });
+        await obj.nestedFirstManyToSome(300, 3, { from: wallet3 });
+        (await obj.value.call()).should.be.bignumber.equal(300);
+    });
+
+    it('should works for nested methods with onlyAnyOwners => onlySomeOwners modifier', async function () {
+        const obj = await MultiownableImpl.new();
+        await obj.transferOwnership([wallet1, wallet2, wallet3]);
+
+        // 1 => 1
+        await obj.nestedFirstAnyToSome(100, 1, { from: wallet1 });
+        (await obj.value.call()).should.be.bignumber.equal(100);
+        await obj.nestedFirstAnyToSome(200, 1, { from: wallet2 });
+        (await obj.value.call()).should.be.bignumber.equal(200);
+        await obj.nestedFirstAnyToSome(300, 1, { from: wallet3 });
+        (await obj.value.call()).should.be.bignumber.equal(300);
+
+        // 1 => 2
+        await obj.nestedFirstAnyToSome(100, 2, { from: wallet1 }).should.be.rejectedWith(EVMRevert);
+        await obj.nestedFirstAnyToSome(200, 2, { from: wallet2 }).should.be.rejectedWith(EVMRevert);
+        await obj.nestedFirstAnyToSome(300, 2, { from: wallet3 }).should.be.rejectedWith(EVMRevert);
     });
 
     it('should not allow to transfer ownership to several equal users', async function () {

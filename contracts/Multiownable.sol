@@ -44,8 +44,18 @@ contract Multiownable {
     * @dev Allows to perform method by any of the owners
     */
     modifier onlyAnyOwner {
-        require(isOwner(msg.sender));
-        _;
+        if (checkHowManyOwners(1)) {
+            bool update = (insideOnlyManyOwners == address(0));
+            if (update) {
+                insideOnlyManyOwners = msg.sender;
+                insideOnlyManyOwnersCount = 1;
+            }
+            _;
+            if (update) {
+                insideOnlyManyOwners = address(0);
+                insideOnlyManyOwnersCount = 0;
+            }
+        }
     }
 
     /**
@@ -121,7 +131,8 @@ contract Multiownable {
     function checkHowManyOwners(uint howMany) internal returns(bool) {
         require(isOwner(msg.sender));
 
-        if (insideOnlyManyOwners == msg.sender && howMany <= insideOnlyManyOwnersCount) {
+        if (insideOnlyManyOwners == msg.sender) {
+            require(howMany <= insideOnlyManyOwnersCount);
             return true;
         }
 
