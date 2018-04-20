@@ -17,12 +17,13 @@ contract Multiownable {
     mapping(bytes32 => uint) public allOperationsIndicies;
 
     // Owners voting mask per operations
-    mapping(bytes32 => uint256) public votesMaskByOperation;
+    mapping(bytes32 => mapping(uint => uint256)) public votesMasksByOperation;
     mapping(bytes32 => uint256) public votesCountByOperation;
 
     // EVENTS
 
     event OwnershipTransferred(address[] previousOwners, uint howManyOwnersDecide, address[] newOwners, uint newHowManyOwnersDecide);
+    event OwnershipChanged(address[] newOwners, uint newHowManyOwnersDecide);
     event OperationCreated(bytes32 operation, uint howMany, uint ownersCount, address proposer);
     event OperationUpvoted(bytes32 operation, uint votes, uint howMany, uint ownersCount, address upvoter);
     event OperationPerformed(bytes32 operation, uint howMany, uint ownersCount, address performer);
@@ -143,8 +144,10 @@ contract Multiownable {
         require(ownerIndex < owners.length, "checkHowManyOwners: msg.sender is not an owner");
         bytes32 operation = keccak256(msg.data, ownersGeneration);
 
-        require((votesMaskByOperation[operation] & (2 ** ownerIndex)) == 0, "checkHowManyOwners: owner already voted for the operation");
-        votesMaskByOperation[operation] |= (2 ** ownerIndex);
+        require((votesMasksByOperation[operation][ownerIndex/256] & (2 ** (ownerIndex%256))) == 0, "checkHowManyOwners: owner already voted for the operation");
+        votesMasksByOperation[operation][ownerIndex/256] |= (2 ** (ownerIndex%256));
+        emit OperationUpvoted(operation, operationVotesCount, howMany, owners.length, msg.sender);
+        
         uint operationVotesCount = votesCountByOperation[operation] + 1;
         votesCountByOperation[operation] = operationVotesCount;
         if (operationVotesCount == 1) {
@@ -152,7 +155,6 @@ contract Multiownable {
             allOperations.push(operation);
             emit OperationCreated(operation, howMany, owners.length, msg.sender);
         }
-        emit OperationUpvoted(operation, operationVotesCount, howMany, owners.length, msg.sender);
 
         // If enough owners confirmed the same operation
         if (votesCountByOperation[operation] == howMany) {
@@ -176,7 +178,9 @@ contract Multiownable {
         }
         allOperations.length--;
 
-        delete votesMaskByOperation[operation];
+        for (uint i = 0; i <= owners.length/256; i++) {
+            delete votesMasksByOperation[operation][i];
+        }
         delete votesCountByOperation[operation];
         delete allOperationsIndicies[operation];
     }
@@ -184,16 +188,18 @@ contract Multiownable {
     // PUBLIC METHODS
 
     /**
-    * @dev Allows owners to change their mind by cacnelling votesMaskByOperation operations
-    * @param operation defines which operation to delete
+    * @dev Allows owners to change their mind by cancelling votesMasksByOperation operations
+    * @param operation defines which operation to cancel
     */
     function cancelPending(bytes32 operation) public onlyAnyOwner {
         uint ownerIndex = ownersIndices[msg.sender] - 1;
-        require((votesMaskByOperation[operation] & (2 ** ownerIndex)) != 0, "cancelPending: operation not found for this user");
-        votesMaskByOperation[operation] &= ~(2 ** ownerIndex);
+        
+        require((votesMasksByOperation[operation][ownerIndex/256] & (2 ** (ownerIndex%256))) != 0, "cancelPending: operation not found for this user");
+        votesMasksByOperation[operation][ownerIndex/256] &= ~(2 ** (ownerIndex%256));
+        emit OperationDownvoted(operation, operationVotesCount, owners.length, msg.sender);
+        
         uint operationVotesCount = votesCountByOperation[operation] - 1;
         votesCountByOperation[operation] = operationVotesCount;
-        emit OperationDownvoted(operation, operationVotesCount, owners.length, msg.sender);
         if (operationVotesCount == 0) {
             deleteOperation(operation);
             emit OperationCancelled(operation, msg.sender);
@@ -215,7 +221,6 @@ contract Multiownable {
     */
     function transferOwnershipWithHowMany(address[] newOwners, uint256 newHowManyOwnersDecide) public onlyManyOwners {
         require(newOwners.length > 0, "transferOwnershipWithHowMany: owners array is empty");
-        require(newOwners.length <= 256, "transferOwnershipWithHowMany: owners count is greater then 256");
         require(newHowManyOwnersDecide > 0, "transferOwnershipWithHowMany: newHowManyOwnersDecide equal to 0");
         require(newHowManyOwnersDecide <= newOwners.length, "transferOwnershipWithHowMany: newHowManyOwnersDecide exceeds the number of owners");
 
@@ -234,6 +239,24 @@ contract Multiownable {
         howManyOwnersDecide = newHowManyOwnersDecide;
         allOperations.length = 0;
         ownersGeneration++;
+    }
+
+    /**
+    * @dev Allows owners to add new owners
+    * @param newOwners defines array of addresses of new owners
+    * @param newHowManyOwnersDecide defines how many owners can decide
+    */
+    function addOwnersWithHowMany(address[] newOwners, uint256 newHowManyOwnersDecide) public onlyManyOwners {
+        require(newHowManyOwnersDecide > 0, "transferOwnershipWithHowMany: newHowManyOwnersDecide equal to 0");
+        require(newHowManyOwnersDecide <= owners.length + newOwners.length, "transferOwnershipWithHowMany: newHowManyOwnersDecide exceeds the number of owners");
+
+        for (uint i = 0; i < newOwners.length; i++) {
+            require(newOwners[i] != address(0), "transferOwnershipWithHowMany: owners array contains zero");
+            require(ownersIndices[newOwners[i]] == 0, "transferOwnershipWithHowMany: owners array contains duplicates");
+            ownersIndices[newOwners[i]] = owners.push(newOwners[i]);
+        }
+        howManyOwnersDecide = newHowManyOwnersDecide;
+        emit OwnershipChanged(owners, newHowManyOwnersDecide);
     }
 
 }
