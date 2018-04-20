@@ -10,6 +10,7 @@ contract Multiownable {
     address[] public owners;
     bytes32[] public allOperations;
     address internal insideOnlyManyOwners;
+    uint internal insideOnlyManyOwnersCount;
 
     // Reverse lookup tables for owners and allOperations
     mapping(address => uint) ownersIndices; // Starts from 1
@@ -48,14 +49,81 @@ contract Multiownable {
     }
 
     /**
-    * @dev Allows to perform method only after all owners call it with the same arguments
+    * @dev Allows to perform method only after many owners call it with the same arguments
     */
     modifier onlyManyOwners {
-        if (insideOnlyManyOwners == msg.sender) {
+        if (checkHowManyOwners(howManyOwnersDecide)) {
+            bool update = (insideOnlyManyOwners == address(0));
+            if (update) {
+                insideOnlyManyOwners = msg.sender;
+                insideOnlyManyOwnersCount = howManyOwnersDecide;
+            }
             _;
-            return;
+            if (update) {
+                insideOnlyManyOwners = address(0);
+                insideOnlyManyOwnersCount = 0;
+            }
         }
+    }
+
+    /**
+    * @dev Allows to perform method only after all owners call it with the same arguments
+    */
+    modifier onlyAllOwners {
+        if (checkHowManyOwners(owners.length)) {
+            bool update = (insideOnlyManyOwners == address(0));
+            if (update) {
+                insideOnlyManyOwners = msg.sender;
+                insideOnlyManyOwnersCount = owners.length;
+            }
+            _;
+            if (update) {
+                insideOnlyManyOwners = address(0);
+                insideOnlyManyOwnersCount = 0;
+            }
+        }
+    }
+
+    /**
+    * @dev Allows to perform method only after some owners call it with the same arguments
+    */
+    modifier onlySomeOwners(uint howMany) {
+        require(howMany > 0);
+        require(howMany <= owners.length);
+        
+        if (checkHowManyOwners(howMany)) {
+            bool update = (insideOnlyManyOwners == address(0));
+            if (update) {
+                insideOnlyManyOwners = msg.sender;
+                insideOnlyManyOwnersCount = howMany;
+            }
+            _;
+            if (update) {
+                insideOnlyManyOwners = address(0);
+                insideOnlyManyOwnersCount = 0;
+            }
+        }
+    }
+
+    // CONSTRUCTOR
+
+    constructor() public {
+        owners.push(msg.sender);
+        ownersIndices[msg.sender] = 1;
+        howManyOwnersDecide = 1;
+    }
+
+    // INTERNAL METHODS
+
+    /**
+     * @dev onlyManyOwners modifier helper
+     */
+    function checkHowManyOwners(uint howMany) internal returns(bool) {
         require(isOwner(msg.sender));
+
+        if (insideOnlyManyOwners == msg.sender && howMany <= insideOnlyManyOwnersCount) {
+            return true;
+        }
 
         uint ownerIndex = ownersIndices[msg.sender] - 1;
         bytes32 operation = keccak256(msg.data, ownersGeneration);
@@ -69,23 +137,14 @@ contract Multiownable {
         votesCountByOperation[operation] += 1;
 
         // If all owners confirm same operation
-        if (votesCountByOperation[operation] == howManyOwnersDecide) {
+        if (votesCountByOperation[operation] == howMany) {
             deleteOperation(operation);
             insideOnlyManyOwners = msg.sender;
-            _;
-            insideOnlyManyOwners = address(0);
+            insideOnlyManyOwnersCount = howMany;
+            return true;
         }
+        return false;
     }
-
-    // CONSTRUCTOR
-
-    constructor() public {
-        owners.push(msg.sender);
-        ownersIndices[msg.sender] = 1;
-        howManyOwnersDecide = 1;
-    }
-
-    // INTERNAL METHODS
 
     /**
     * @dev Used to delete cancelled or performed operation
