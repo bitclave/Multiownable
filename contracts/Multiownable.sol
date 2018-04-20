@@ -107,7 +107,7 @@ contract Multiownable {
 
     // CONSTRUCTOR
 
-    constructor() public {
+    function Multiownable() public {
         owners.push(msg.sender);
         ownersIndices[msg.sender] = 1;
         howManyOwnersDecide = 1;
