@@ -5,6 +5,7 @@ contract Multiownable {
 
     // VARIABLES
 
+    uint256 public ownersGeneration;
     uint256 public howManyOwnersDecide;
     address[] public owners;
     bytes32[] public allOperations;
@@ -57,7 +58,7 @@ contract Multiownable {
         require(isOwner(msg.sender));
 
         uint ownerIndex = ownersIndices[msg.sender] - 1;
-        bytes32 operation = keccak256(msg.data);
+        bytes32 operation = keccak256(msg.data, ownersGeneration);
 
         if (votesMaskByOperation[operation] == 0) {
             allOperationsIndicies[operation] = allOperations.length;
@@ -154,14 +155,8 @@ contract Multiownable {
         }
         owners = newOwners;
         howManyOwnersDecide = newHowManyOwnersDecide;
-
-        // Discard all pendign operations
-        for (i = 0; i < allOperations.length; i++) {
-            delete votesMaskByOperation[allOperations[i]];
-            delete votesCountByOperation[allOperations[i]];
-            delete allOperationsIndicies[allOperations[i]];
-        }
         allOperations.length = 0;
+        ownersGeneration++;
     }
 
 }
