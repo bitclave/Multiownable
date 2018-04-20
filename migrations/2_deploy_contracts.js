@@ -1,5 +1,5 @@
-const Multiownable = artifacts.require("Multiownable");
+const Multiownable = artifacts.require('Multiownable');
 
-module.exports = function(deployer) {
+module.exports = function (deployer) {
     deployer.deploy(Multiownable);
 };
