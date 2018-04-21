@@ -169,8 +169,8 @@ contract Multiownable {
     * @param operation defines which operation to delete
     */
     function deleteOperation(bytes32 operation) internal {
-        uint index = allOperationsIndicies[operation]; // Index stays incemented
-        if (index < allOperations.length) { // Not last
+        uint index = allOperationsIndicies[operation];
+        if (index < allOperations.length - 1) { // Not last
             allOperations[index] = allOperations[allOperations.length - 1];
             allOperationsIndicies[allOperations[index]] = index;
         }
