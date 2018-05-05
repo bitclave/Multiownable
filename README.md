@@ -18,7 +18,7 @@ On macOS you also need to install watchman: `brew install watchman`
 # Features
 
 1. Supports up to 256 simultaneous owners
-2. Simple usage: add modifiers `onlyAnyOwner` and `onlyManyOwners`
+2. Simple usage: add modifiers `onlyAnyOwner`, `onlyManyOwners`, `onlyAllOwners` and `onlySomeOwners(howMany)`
 3. Supports multiple pending operations
 4. Allows owners to cancel pending operations
 5. Reset all pending operations on ownership transfering
