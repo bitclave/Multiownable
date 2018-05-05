@@ -12,7 +12,7 @@ contract Migrations {
         }
     }
 
-    function Migrations() public {
+    constructor() public {
         owner = msg.sender;
     }
 
