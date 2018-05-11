@@ -7,16 +7,22 @@ require('chai')
     .use(require('chai-bignumber')(web3.BigNumber))
     .should();
 
+const ItemsSetAndLookup = artifacts.require('ItemsSetAndLookup.sol');
 const MultiAttackable = artifacts.require('./impl/MultiAttackable.sol');
 const MultiAttacker = artifacts.require('./impl/MultiAttacker.sol');
 
 contract('MultiAttack', function ([_, wallet1, wallet2, wallet3, wallet4, wallet5]) {
+    before(async function () {
+        MultiAttackable.link('ItemsSetAndLookup', (await ItemsSetAndLookup.new()).address);
+    });
+
     it('should handle reentracy attack', async function () {
         const victim = await MultiAttackable.new();
         const hacker = await MultiAttacker.new();
 
         // Prepare victim wallet
-        await victim.transferOwnership([wallet1, wallet2]);
+        await victim.addOwners([wallet1, wallet2]);
+        await victim.resignOwnership({ from: _ });
         await web3.eth.sendTransaction({ from: _, to: victim.address, value: ether(3) });
 
         // Try reentrace attack
