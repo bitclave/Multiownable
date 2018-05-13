@@ -148,6 +148,14 @@ contract Multiownable {
         howManyOwnersDecide = 1;
     }
 
+    // PRIVATE METHODS
+
+    function _deleteOperation(bytes32 operation) private {
+        operations.remove(operation);
+        delete dataByOperation[operation];
+        delete votesCountByOperation[operation];
+    }
+
     // INTERNAL METHODS
 
     /**
@@ -204,12 +212,6 @@ contract Multiownable {
         }
     }
 
-    function _deleteOperation(bytes32 operation) internal {
-        operations.remove(operation);
-        delete dataByOperation[operation];
-        delete votesCountByOperation[operation];
-    }
-
     function _addOwner(address newOwner) internal {
         require(newOwner != address(0), "_addOwner: owners array contains zero");
         require(owners.add(bytes32(newOwner)), "_addOwner: owners array contains duplicates");
@@ -217,8 +219,8 @@ contract Multiownable {
         howManyOwnersDecide += 1;
     }
 
-    function _resignOwnership(address theOwner) internal {
-        require(owners.remove(bytes32(theOwner)), "_resignOwnership: theOwner do not exist");
+    function _removeOwner(address theOwner) internal {
+        require(owners.remove(bytes32(theOwner)), "_removeOwner: theOwner do not exist");
         howManyOwnersDecide -= ((howManyOwnersDecide > 1) ? 1 : 0);
         uint256 ownerId = ownerIds[theOwner];
         for (uint i = operationsByOwnerId[ownerId].length(); i > 0; i--) {
@@ -257,7 +259,7 @@ contract Multiownable {
     */
     function resignOwnership() public onlyAnyOwner {
         require(owners.length() > 1);
-        _resignOwnership(msg.sender);
+        _removeOwner(msg.sender);
     }
 
     /**
@@ -289,7 +291,7 @@ contract Multiownable {
         require(newOwners.length > 0, "transferOwnershipWithHowMany: newOwners length should be at least 1");
         for (uint i = owners.length(); i > 0; i--) {
             address oldOwner = address(owners.at(i - 1));
-            _resignOwnership(oldOwner);
+            _removeOwner(oldOwner);
         }
         addOwnersWithHowMany(newOwners, howMany);
     }
@@ -302,7 +304,7 @@ contract Multiownable {
     function removeOwnersWithHowMany(address[] theOwners, uint256 howMany) public onlyManyOwners {
         require(owners.length() > theOwners.length);
         for (uint  i = 0; i < theOwners.length; i++) {
-            _resignOwnership(theOwners[i]);
+            _removeOwner(theOwners[i]);
         }
         _setHowManyOwnersDecide(howMany);
     }

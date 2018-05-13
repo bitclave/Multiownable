@@ -232,6 +232,20 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
             (await obj.isOwner.call(wallet3)).should.be.false;
         });
 
+        it('should not remove all owners', async function () {
+            const obj = await Multiownable.new();
+
+            await obj.addOwners([wallet1]);
+            await obj.removeOwnersWithHowMany([_, wallet1], 1, { from: _ });
+            await obj.removeOwnersWithHowMany([_, wallet1], 1, { from: wallet1 }).should.be.rejectedWith(EVMRevert);
+
+            await obj.addOwners([wallet2], { from: _ });
+            await obj.addOwners([wallet2], { from: wallet1 });
+            await obj.removeOwnersWithHowMany([_, wallet1, wallet2], 1, { from: _ });
+            await obj.removeOwnersWithHowMany([_, wallet1, wallet2], 1, { from: wallet1 });
+            await obj.removeOwnersWithHowMany([_, wallet1, wallet2], 1, { from: wallet2 }).should.be.rejectedWith(EVMRevert);
+        });
+
         it('should remove mid of 3 owners', async function () {
             const obj = await Multiownable.new();
 
