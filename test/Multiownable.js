@@ -280,6 +280,12 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
             (await obj.isOwner.call(wallet2)).should.be.false;
             (await obj.isOwner.call(wallet3)).should.be.false;
         });
+
+        it('should not be able to remove wrong owner from unsafe subcontract', async function () {
+            const obj = await MultiownableImpl.new();
+
+            await obj.unsafeResignOwnership({ from: wallet1 }).should.be.rejectedWith(EVMRevert);
+        });
     });
 
     describe('resignOwnership', async function () {
@@ -575,6 +581,48 @@ contract('Multiownable', function ([_, wallet1, wallet2, wallet3, wallet4, walle
 
             await obj.transferOwnershipWithHowMany([wallet3], 1, { from: wallet2 });
             (await obj.ownerAt.call(0)).should.be.equal(wallet3);
+        });
+
+        it('should not be able to create more than 20 pending operations per owner', async function () {
+            const obj = await MultiownableImpl.new();
+            await obj.transferOwnershipWithHowMany([wallet1, wallet2], 2);
+
+            // Fill wallet1 pending operations list
+            for (let i = 0; i < 20; i++) {
+                await obj.setValue(i, { from: wallet1 });
+            }
+            await obj.setValue(20, { from: wallet1 }).should.be.rejectedWith(EVMRevert);
+            (await obj.ownerOperationsLength.call(wallet1)).should.be.bignumber.equal(20);
+            (await obj.allOwnerOperations.call(wallet1)).should.be.deep.equal([
+                await obj.ownerOperationsAt.call(wallet1, 0),
+                await obj.ownerOperationsAt.call(wallet1, 1),
+                await obj.ownerOperationsAt.call(wallet1, 2),
+                await obj.ownerOperationsAt.call(wallet1, 3),
+                await obj.ownerOperationsAt.call(wallet1, 4),
+                await obj.ownerOperationsAt.call(wallet1, 5),
+                await obj.ownerOperationsAt.call(wallet1, 6),
+                await obj.ownerOperationsAt.call(wallet1, 7),
+                await obj.ownerOperationsAt.call(wallet1, 8),
+                await obj.ownerOperationsAt.call(wallet1, 9),
+                await obj.ownerOperationsAt.call(wallet1, 10),
+                await obj.ownerOperationsAt.call(wallet1, 11),
+                await obj.ownerOperationsAt.call(wallet1, 12),
+                await obj.ownerOperationsAt.call(wallet1, 13),
+                await obj.ownerOperationsAt.call(wallet1, 14),
+                await obj.ownerOperationsAt.call(wallet1, 15),
+                await obj.ownerOperationsAt.call(wallet1, 16),
+                await obj.ownerOperationsAt.call(wallet1, 17),
+                await obj.ownerOperationsAt.call(wallet1, 18),
+                await obj.ownerOperationsAt.call(wallet1, 19),
+            ]);
+
+            // Erase wallet1 pending operations list
+            for (let i = 20; i > 0; i--) {
+                const operation = await obj.ownerOperationsAt.call(wallet1, Math.random() % i);
+                await obj.cancelOperation(operation, { from: wallet1, gas: 2000000 });
+            }
+            (await obj.ownerOperationsLength.call(wallet1)).should.be.bignumber.equal(0);
+            (await obj.allOwnerOperations.call(wallet1)).should.be.deep.equal([]);
         });
     });
 

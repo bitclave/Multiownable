@@ -73,4 +73,10 @@ contract MultiownableImpl is Multiownable {
         value = _value;
     }
 
+    //
+
+    function unsafeResignOwnership() public {
+        _removeOwner(msg.sender);
+    }
+
 }

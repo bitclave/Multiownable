@@ -7,18 +7,20 @@ contract Multiownable {
 
     using Set for Set.Data;
 
+    uint256 public constant MAX_PENDING_OPERATIONS_PER_OWNER = 20;
+
     // VARIABLES
 
     uint256 public nextOwnerId = 1; // Unique for every reowning
     uint256 public howManyOwnersDecide;
     Set.Data internal owners;
     Set.Data internal operations;
+    mapping(uint256 => Set.Data) internal operationsByOwnerId;
     mapping(address => uint256) public ownerIds;
     mapping(bytes32 => uint256) public dataHashGeneration;
-    mapping(bytes32 => bytes) public dataByOperation;
-    mapping(uint256 => Set.Data) internal operationsByOwnerId;
     mapping(bytes32 => uint256) public votesCountByOperation;
-
+    mapping(bytes32 => bytes) public dataByOperation;
+    
     address internal insideCallSender;
     uint256 internal insideCallCount;
     
@@ -60,6 +62,21 @@ contract Multiownable {
 
     function allOperations() public view returns(bytes32[]) {
         return operations.items;
+    }
+
+    function ownerOperationsLength(address theOwner) public view returns(uint256) {
+        uint256 ownerId = ownerIds[theOwner];
+        return operationsByOwnerId[ownerId].length();
+    }
+
+    function ownerOperationsAt(address theOwner, uint i) public view returns(bytes32) {
+        uint256 ownerId = ownerIds[theOwner];
+        return operationsByOwnerId[ownerId].at(i);
+    }
+
+    function allOwnerOperations(address theOwner) public view returns(bytes32[]) {
+        uint256 ownerId = ownerIds[theOwner];
+        return operationsByOwnerId[ownerId].items;
     }
 
     // MODIFIERS
@@ -173,6 +190,8 @@ contract Multiownable {
         uint operationVotesCount = votesCountByOperation[operation] + 1;
         votesCountByOperation[operation] = operationVotesCount;
         require(operationsByOwnerId[ownerId].add(operation), "checkHowManyOwners: owner already voted for the operation");
+        require(operationsByOwnerId[ownerId].length() <= MAX_PENDING_OPERATIONS_PER_OWNER,
+            "checkHowManyOwners: owner already have MAX allowed pending operations");
         if (operationVotesCount == 1) {
             operations.add(operation);
             dataByOperation[operation] = msg.data;
