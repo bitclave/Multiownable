@@ -1,12 +1,12 @@
 pragma solidity ^0.4.11;
 
-import { ItemsSetAndLookup } from "../../contracts/ItemsSetAndLookup.sol";
+import { Set } from "../../contracts/Set.sol";
 
 
-contract ItemsSetAndLookupImpl {
-    using ItemsSetAndLookup for ItemsSetAndLookup.Data;
+contract SetImpl {
+    using Set for Set.Data;
 
-    ItemsSetAndLookup.Data data;
+    Set.Data data;
 
     function length() public view returns(uint) {
         return data.length();

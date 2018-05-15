@@ -1,7 +1,7 @@
 pragma solidity ^0.4.23;
 
 
-library ItemsSetAndLookup {
+library Set {
 
     struct Data {
         bytes32[] items;

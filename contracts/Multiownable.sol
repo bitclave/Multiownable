@@ -1,18 +1,18 @@
 pragma solidity ^0.4.23;
 
-import "./ItemsSetAndLookup.sol";
+import "./Set.sol";
 
 
 contract Multiownable {
 
-    using ItemsSetAndLookup for ItemsSetAndLookup.Data;
+    using Set for Set.Data;
 
     // VARIABLES
 
     uint256 public nextOwnerId = 1; // Unique for every reowning
     uint256 public howManyOwnersDecide;
-    ItemsSetAndLookup.Data internal owners;
-    ItemsSetAndLookup.Data internal operations;
+    Set.Data internal owners;
+    Set.Data internal operations;
     mapping(address => uint256) public ownerIds;
     mapping(bytes32 => uint256) public dataHashGeneration;
     mapping(bytes32 => bytes) public dataByOperation;
@@ -20,7 +20,7 @@ contract Multiownable {
     address internal insideCallSender;
     uint256 internal insideCallCount;
 
-    mapping(uint256 => ItemsSetAndLookup.Data) internal operationsByOwnerId;
+    mapping(uint256 => Set.Data) internal operationsByOwnerId;
     mapping(bytes32 => mapping(uint256 => bool)) public votedByOperationAndOwnerId;
     mapping(bytes32 => uint256) public votesCountByOperation;
 
@@ -70,17 +70,17 @@ contract Multiownable {
     * @dev Allows to perform method by any of the owners
     */
     modifier onlyAnyOwner {
-        if (_voteAndCheck(1)) {
-            bool update = (insideCallSender == address(0));
-            if (update) {
-                insideCallSender = msg.sender;
-                insideCallCount = 1;
-            }
-            _;
-            if (update) {
-                insideCallSender = address(0);
-                insideCallCount = 0;
-            }
+        require(isOwner(msg.sender));
+        
+        bool update = (insideCallSender == address(0));
+        if (update) {
+            insideCallSender = msg.sender;
+            insideCallCount = 1;
+        }
+        _;
+        if (update) {
+            insideCallSender = address(0);
+            insideCallCount = 0;
         }
     }
 

@@ -5,20 +5,20 @@ require('chai')
     .use(require('chai-bignumber')(web3.BigNumber))
     .should();
 
-const ItemsSetAndLookup = artifacts.require('ItemsSetAndLookup');
-const ItemsSetAndLookupImpl = artifacts.require('ItemsSetAndLookupImpl');
+const Set = artifacts.require('Set');
+const SetImpl = artifacts.require('SetImpl');
 
 const value1 = 'abcdefghijklmnopqrstuvwxyz123456';
 const value2 = 'abcdefghijklmnopqrstuvwxyz123457';
 const value3 = 'abcdefghijklmnopqrstuvwxyz123458';
 
-contract('ItemsSetAndLookup', function ([_, wallet1, wallet2, wallet3, wallet4, wallet5]) {
+contract('Set', function ([_, wallet1, wallet2, wallet3, wallet4, wallet5]) {
     before(async function () {
-        ItemsSetAndLookupImpl.link('ItemsSetAndLookup', (await ItemsSetAndLookup.new()).address);
+        SetImpl.link('Set', (await Set.new()).address);
     });
 
     it('should init correctly', async function () {
-        const set = await ItemsSetAndLookupImpl.new();
+        const set = await SetImpl.new();
 
         (await set.length.call()).should.be.bignumber.equal(0);
         (await set.contains.call(value1)).should.be.false;
@@ -28,7 +28,7 @@ contract('ItemsSetAndLookup', function ([_, wallet1, wallet2, wallet3, wallet4, 
 
     describe('add', async function () {
         it('should add first item', async function () {
-            const set = await ItemsSetAndLookupImpl.new();
+            const set = await SetImpl.new();
 
             await set.add(value1);
 
@@ -40,7 +40,7 @@ contract('ItemsSetAndLookup', function ([_, wallet1, wallet2, wallet3, wallet4, 
         });
 
         it('should add two different items', async function () {
-            const set = await ItemsSetAndLookupImpl.new();
+            const set = await SetImpl.new();
 
             await set.add(value1);
             await set.add(value2);
@@ -54,7 +54,7 @@ contract('ItemsSetAndLookup', function ([_, wallet1, wallet2, wallet3, wallet4, 
         });
 
         it('should add three different items', async function () {
-            const set = await ItemsSetAndLookupImpl.new();
+            const set = await SetImpl.new();
 
             await set.add(value1);
             await set.add(value2);
@@ -70,7 +70,7 @@ contract('ItemsSetAndLookup', function ([_, wallet1, wallet2, wallet3, wallet4, 
         });
 
         it('should not add existing item to 1 item', async function () {
-            const set = await ItemsSetAndLookupImpl.new();
+            const set = await SetImpl.new();
 
             await set.add(value1);
             await set.add(value1);
@@ -83,7 +83,7 @@ contract('ItemsSetAndLookup', function ([_, wallet1, wallet2, wallet3, wallet4, 
         });
 
         it('should not add existing item to 2 items (1)', async function () {
-            const set = await ItemsSetAndLookupImpl.new();
+            const set = await SetImpl.new();
 
             await set.add(value1);
             await set.add(value2);
@@ -98,7 +98,7 @@ contract('ItemsSetAndLookup', function ([_, wallet1, wallet2, wallet3, wallet4, 
         });
 
         it('should not add existing item to 2 items (2)', async function () {
-            const set = await ItemsSetAndLookupImpl.new();
+            const set = await SetImpl.new();
 
             await set.add(value1);
             await set.add(value2);
@@ -115,7 +115,7 @@ contract('ItemsSetAndLookup', function ([_, wallet1, wallet2, wallet3, wallet4, 
 
     describe('remove', async function () {
         it('should delete 1 of 1 items', async function () {
-            const set = await ItemsSetAndLookupImpl.new();
+            const set = await SetImpl.new();
 
             await set.add(value1);
             await set.remove(value1);
@@ -127,7 +127,7 @@ contract('ItemsSetAndLookup', function ([_, wallet1, wallet2, wallet3, wallet4, 
         });
 
         it('should delete first of 2 items', async function () {
-            const set = await ItemsSetAndLookupImpl.new();
+            const set = await SetImpl.new();
 
             await set.add(value1);
             await set.add(value2);
@@ -141,7 +141,7 @@ contract('ItemsSetAndLookup', function ([_, wallet1, wallet2, wallet3, wallet4, 
         });
 
         it('should delete last of 2 items', async function () {
-            const set = await ItemsSetAndLookupImpl.new();
+            const set = await SetImpl.new();
 
             await set.add(value1);
             await set.add(value2);
@@ -155,7 +155,7 @@ contract('ItemsSetAndLookup', function ([_, wallet1, wallet2, wallet3, wallet4, 
         });
 
         it('should delete mid of 3 items', async function () {
-            const set = await ItemsSetAndLookupImpl.new();
+            const set = await SetImpl.new();
 
             await set.add(value1);
             await set.add(value2);
@@ -171,7 +171,7 @@ contract('ItemsSetAndLookup', function ([_, wallet1, wallet2, wallet3, wallet4, 
         });
 
         it('should not delete not existing item', async function () {
-            const set = await ItemsSetAndLookupImpl.new();
+            const set = await SetImpl.new();
 
             await set.add(value1);
             await set.add(value2);

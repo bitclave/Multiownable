@@ -1,7 +1,7 @@
 const Multiownable = artifacts.require('Multiownable');
-const ItemsSetAndLookup = artifacts.require('ItemsSetAndLookup');
+const Set = artifacts.require('Set');
 
 module.exports = async function (deployer) {
-    Multiownable.link('ItemsSetAndLookup', (await ItemsSetAndLookup.new()).address);
+    Multiownable.link('Set', (await Set.new()).address);
     deployer.deploy(Multiownable);
 };
