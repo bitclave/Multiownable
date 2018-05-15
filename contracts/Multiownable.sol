@@ -16,14 +16,12 @@ contract Multiownable {
     mapping(address => uint256) public ownerIds;
     mapping(bytes32 => uint256) public dataHashGeneration;
     mapping(bytes32 => bytes) public dataByOperation;
+    mapping(uint256 => Set.Data) internal operationsByOwnerId;
+    mapping(bytes32 => uint256) public votesCountByOperation;
 
     address internal insideCallSender;
     uint256 internal insideCallCount;
-
-    mapping(uint256 => Set.Data) internal operationsByOwnerId;
-    mapping(bytes32 => mapping(uint256 => bool)) public votedByOperationAndOwnerId;
-    mapping(bytes32 => uint256) public votesCountByOperation;
-
+    
     // EVENTS
 
     event OwnersAdded(address[] newOwners, uint newHowManyOwnersDecide);
@@ -172,12 +170,9 @@ contract Multiownable {
         bytes32 calldataHash = keccak256(msg.data);
         bytes32 operation = bytes32(uint256(calldataHash) + dataHashGeneration[calldataHash]);
 
-        require(!votedByOperationAndOwnerId[operation][ownerId], "checkHowManyOwners: owner already voted for the operation");
-        votedByOperationAndOwnerId[operation][ownerId] = true;
-
         uint operationVotesCount = votesCountByOperation[operation] + 1;
         votesCountByOperation[operation] = operationVotesCount;
-        operationsByOwnerId[ownerId].add(operation);
+        require(operationsByOwnerId[ownerId].add(operation), "checkHowManyOwners: owner already voted for the operation");
         if (operationVotesCount == 1) {
             operations.add(operation);
             dataByOperation[operation] = msg.data;
@@ -199,9 +194,7 @@ contract Multiownable {
     function _cancelOperation(bytes32 operation, address theOwner) internal {
         uint256 ownerId = ownerIds[theOwner];
 
-        require(votedByOperationAndOwnerId[operation][ownerId], "_cancelOperation: operation not found for this user");
-        delete votedByOperationAndOwnerId[operation][ownerId];
-        operationsByOwnerId[ownerId].remove(operation);
+        require(operationsByOwnerId[ownerId].remove(operation), "_cancelOperation: operation not found for this user");
 
         uint operationVotesCount = votesCountByOperation[operation] - 1;
         votesCountByOperation[operation] = operationVotesCount;
